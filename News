@@ -1,0 +1,32 @@
+import requests as req
+from bs4 import BeautifulSoup as BS
+from datetime import datetime
+import pandas as pd
+
+current_date = datetime.now().strftime("%Y-%m-%d")
+
+url = "https://www.businesstoday.in/latest/economy"
+
+response = req.get(url)
+
+if response.status_code == 200:
+    html_content = response.text
+else:
+    print("Failed to retrieve the web")
+    exit()
+
+trav = BS(html_content, 'html.parser')
+
+news_data = []
+
+for link in trav.find_all('a'):
+    if isinstance(link.string, str) and len(link.string) > 35:
+        # Append the title and date to the news_data list
+        news_data.append((current_date, link.string.strip()))
+
+df = pd.DataFrame(news_data, columns=["Date", "Title"])
+
+csv_filename = f"news_titles_{current_date}.csv"
+df.to_csv(csv_filename, index=False)
+
+print(f"\nSaved news titles to {csv_filename}")
